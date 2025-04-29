@@ -20,6 +20,7 @@ pub struct TrackConfig {
     pub timescale: u32,
     pub language: String,
     pub media_conf: MediaConfig,
+    pub handler_name: String,
 }
 
 impl From<MediaConfig> for TrackConfig {
@@ -41,6 +42,7 @@ impl From<AvcConfig> for TrackConfig {
             timescale: 1000,               // XXX
             language: String::from("und"), // XXX
             media_conf: MediaConfig::AvcConfig(avc_conf),
+            handler_name: "".to_string(),
         }
     }
 }
@@ -52,6 +54,7 @@ impl From<HevcConfig> for TrackConfig {
             timescale: 1000,               // XXX
             language: String::from("und"), // XXX
             media_conf: MediaConfig::HevcConfig(hevc_conf),
+            handler_name: "".to_string(),
         }
     }
 }
@@ -63,6 +66,7 @@ impl From<AacConfig> for TrackConfig {
             timescale: 1000,               // XXX
             language: String::from("und"), // XXX
             media_conf: MediaConfig::AacConfig(aac_conf),
+            handler_name: "".to_string(),
         }
     }
 }
@@ -74,6 +78,7 @@ impl From<TtxtConfig> for TrackConfig {
             timescale: 1000,               // XXX
             language: String::from("und"), // XXX
             media_conf: MediaConfig::TtxtConfig(txtt_conf),
+            handler_name: "".to_string(),
         }
     }
 }
@@ -85,6 +90,7 @@ impl From<Vp9Config> for TrackConfig {
             timescale: 1000,               // XXX
             language: String::from("und"), // XXX
             media_conf: MediaConfig::Vp9Config(vp9_conf),
+            handler_name: "".to_string(),
         }
     }
 }
@@ -687,6 +693,7 @@ impl Mp4TrackWriter {
                 trak.mdia.minf.stbl.stsd.tx3g = Some(tx3g);
             }
         }
+        trak.mdia.hdlr.name = config.handler_name.to_owned();
         Ok(Mp4TrackWriter {
             trak,
             chunk_buffer: BytesMut::new(),

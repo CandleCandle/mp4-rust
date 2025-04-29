@@ -9,6 +9,7 @@ pub struct Hev1Box {
     pub data_reference_index: u16,
     pub width: u16,
     pub height: u16,
+    pub compressorname: String,
 
     #[serde(with = "value_u32")]
     pub horizresolution: FixedPointU16,
@@ -26,6 +27,7 @@ impl Default for Hev1Box {
             data_reference_index: 0,
             width: 0,
             height: 0,
+            compressorname: "".to_string(),
             horizresolution: FixedPointU16::new(0x48),
             vertresolution: FixedPointU16::new(0x48),
             frame_count: 1,
@@ -41,6 +43,7 @@ impl Hev1Box {
             data_reference_index: 1,
             width: config.width,
             height: config.height,
+            compressorname: config.compressorname.clone(),
             horizresolution: FixedPointU16::new(0x48),
             vertresolution: FixedPointU16::new(0x48),
             frame_count: 1,
@@ -97,7 +100,15 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
         let vertresolution = FixedPointU16::new_raw(reader.read_u32::<BigEndian>()?);
         reader.read_u32::<BigEndian>()?; // reserved
         let frame_count = reader.read_u16::<BigEndian>()?;
-        skip_bytes(reader, 32)?; // compressorname
+
+        let compressorname_length = reader.read_u8()?;
+        let mut compressorname_buf = vec![0u8; compressorname_length as usize];
+        reader.read_exact(&mut compressorname_buf)?;
+        skip_bytes(reader, (31u8-compressorname_length).into())?;
+        let compressorname = String::from_utf8(compressorname_buf).unwrap();
+        // let compressorname = "".to_string();
+        // skip_bytes(reader, 32)?;
+
         let depth = reader.read_u16::<BigEndian>()?;
         reader.read_i16::<BigEndian>()?; // pre-defined
 
@@ -117,6 +128,7 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
                 data_reference_index,
                 width,
                 height,
+                compressorname,
                 horizresolution,
                 vertresolution,
                 frame_count,
@@ -131,24 +143,29 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
 
 impl<W: Write> WriteBox<&mut W> for Hev1Box {
     fn write_box(&self, writer: &mut W) -> Result<u64> {
-        let size = self.box_size();
-        BoxHeader::new(self.box_type(), size).write(writer)?;
+        let size = self.box_size(); // Box
+        BoxHeader::new(self.box_type(), size).write(writer)?; // Box
 
-        writer.write_u32::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(self.data_reference_index)?;
+        writer.write_u32::<BigEndian>(0)?; // reserved // 4 of 6 from SampleEntry
+        writer.write_u16::<BigEndian>(0)?; // reserved // 2 of 6 from SampleEntry
+        writer.write_u16::<BigEndian>(self.data_reference_index)?; // SampleEntry
 
-        writer.write_u32::<BigEndian>(0)?; // pre-defined, reserved
-        writer.write_u64::<BigEndian>(0)?; // pre-defined
-        writer.write_u32::<BigEndian>(0)?; // pre-defined
-        writer.write_u16::<BigEndian>(self.width)?;
-        writer.write_u16::<BigEndian>(self.height)?;
-        writer.write_u32::<BigEndian>(self.horizresolution.raw_value())?;
-        writer.write_u32::<BigEndian>(self.vertresolution.raw_value())?;
-        writer.write_u32::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(self.frame_count)?;
-        // skip compressorname
-        write_zeros(writer, 32)?;
+        writer.write_u32::<BigEndian>(0)?; // pre-defined, reserved // 2x16 from VisualSampleEntry
+        writer.write_u64::<BigEndian>(0)?; // pre-defined, 2 of 3 from VisualSampleEntry
+        writer.write_u32::<BigEndian>(0)?; // pre-defined, 3 of 3 from VisualSampleEntry
+        writer.write_u16::<BigEndian>(self.width)?; // VisualSampleEntry
+        writer.write_u16::<BigEndian>(self.height)?; // VisualSampleEntry
+        writer.write_u32::<BigEndian>(self.horizresolution.raw_value())?; // VisualSampleEntry
+        writer.write_u32::<BigEndian>(self.vertresolution.raw_value())?; // VisualSampleEntry
+        writer.write_u32::<BigEndian>(0)?; // reserved // VisualSampleEntry
+        writer.write_u16::<BigEndian>(self.frame_count)?; // VisualSampleEntry
+
+        let len = self.compressorname.as_bytes().len().min(31); // 32 bytes of compressor name; 1st byte is the length.
+        writer.write_u8(len.try_into().unwrap())?;
+        writer.write(&self.compressorname.as_bytes()[0..len])?;
+        write_zeros(writer, (31 - len).try_into().unwrap())?; //  VisualSampleEntry
+
+        // can't see the spec for these two.
         writer.write_u16::<BigEndian>(self.depth)?;
         writer.write_i16::<BigEndian>(-1)?; // pre-defined
 
@@ -209,7 +226,7 @@ impl Mp4Box for HvcCBox {
     }
 
     fn summary(&self) -> Result<String> {
-        Ok(format!("configuration_version={} general_profile_space={} general_tier_flag={} general_profile_idc={} general_profile_compatibility_flags={} general_constraint_indicator_flag={} general_level_idc={} min_spatial_segmentation_idc={} parallelism_type={} chroma_format_idc={} bit_depth_luma_minus8={} bit_depth_chroma_minus8={} avg_frame_rate={} constant_frame_rate={} num_temporal_layers={} temporal_id_nested={} length_size_minus_one={}", 
+        Ok(format!("configuration_version={} general_profile_space={} general_tier_flag={} general_profile_idc={} general_profile_compatibility_flags={} general_constraint_indicator_flag={} general_level_idc={} min_spatial_segmentation_idc={} parallelism_type={} chroma_format_idc={} bit_depth_luma_minus8={} bit_depth_chroma_minus8={} avg_frame_rate={} constant_frame_rate={} num_temporal_layers={} temporal_id_nested={} length_size_minus_one={}",
             self.configuration_version,
             self.general_profile_space,
             self.general_tier_flag,
@@ -317,10 +334,10 @@ impl<R: Read + Seek> ReadBox<&mut R> for HvcCBox {
 
 impl<W: Write> WriteBox<&mut W> for HvcCBox {
     fn write_box(&self, writer: &mut W) -> Result<u64> {
-        let size = self.box_size();
-        BoxHeader::new(self.box_type(), size).write(writer)?;
+        let size = self.box_size();  // Box
+        BoxHeader::new(self.box_type(), size).write(writer)?; // Box
 
-        writer.write_u8(self.configuration_version)?;
+        writer.write_u8(self.configuration_version)?; // HEVCDecoderConfigurationRecord ... and more
         let general_profile_space = (self.general_profile_space & 0b11) << 6;
         let general_tier_flag = u8::from(self.general_tier_flag) << 5;
         let general_profile_idc = self.general_profile_idc & 0b11111;
@@ -371,6 +388,7 @@ mod tests {
             data_reference_index: 1,
             width: 320,
             height: 240,
+            compressorname: "0123456789012345678901234567891".to_string(),
             horizresolution: FixedPointU16::new(0x48),
             vertresolution: FixedPointU16::new(0x48),
             frame_count: 1,
@@ -391,5 +409,49 @@ mod tests {
 
         let dst_box = Hev1Box::read_box(&mut reader, header.size).unwrap();
         assert_eq!(src_box, dst_box);
+    }
+
+    #[test]
+    fn test_hev1_compressor_name_truncation() {
+        let src_box = Hev1Box {
+            data_reference_index: 1,
+            width: 320,
+            height: 240,
+            compressorname: "012345678901234567890123456789012345678901234567890123456789".to_string(),
+            horizresolution: FixedPointU16::new(0x48),
+            vertresolution: FixedPointU16::new(0x48),
+            frame_count: 1,
+            depth: 24,
+            hvcc: HvcCBox {
+                configuration_version: 1,
+                ..Default::default()
+            },
+        };
+
+        let src_box_truncated = Hev1Box {
+            data_reference_index: 1,
+            width: 320,
+            height: 240,
+            compressorname: "0123456789012345678901234567890".to_string(),
+            horizresolution: FixedPointU16::new(0x48),
+            vertresolution: FixedPointU16::new(0x48),
+            frame_count: 1,
+            depth: 24,
+            hvcc: HvcCBox {
+                configuration_version: 1,
+                ..Default::default()
+            },
+        };
+        let mut buf = Vec::new();
+        src_box.write_box(&mut buf).unwrap();
+        assert_eq!(buf.len(), src_box.box_size() as usize);
+
+        let mut reader = Cursor::new(&buf);
+        let header = BoxHeader::read(&mut reader).unwrap();
+        assert_eq!(header.name, BoxType::Hev1Box);
+        assert_eq!(src_box.box_size(), header.size);
+
+        let dst_box = Hev1Box::read_box(&mut reader, header.size).unwrap();
+        assert_eq!(src_box_truncated, dst_box);
     }
 }

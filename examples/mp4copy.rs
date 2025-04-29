@@ -38,6 +38,7 @@ fn copy<P: AsRef<Path>>(src_filename: &P, dst_filename: &P) -> Result<()> {
             minor_version: mp4_reader.minor_version(),
             compatible_brands: mp4_reader.compatible_brands().to_vec(),
             timescale: mp4_reader.timescale(),
+            asset_type: mp4::AssetType::FLAT,
         },
     )?;
 
@@ -53,6 +54,7 @@ fn copy<P: AsRef<Path>>(src_filename: &P, dst_filename: &P) -> Result<()> {
             MediaType::H265 => MediaConfig::HevcConfig(HevcConfig {
                 width: track.width(),
                 height: track.height(),
+                compressorname: "".to_string(),
             }),
             MediaType::VP9 => MediaConfig::Vp9Config(Vp9Config {
                 width: track.width(),
@@ -72,6 +74,7 @@ fn copy<P: AsRef<Path>>(src_filename: &P, dst_filename: &P) -> Result<()> {
             timescale: track.timescale(),
             language: track.language().to_string(),
             media_conf,
+            handler_name: "".to_string(),
         };
 
         mp4_writer.add_track(&track_conf)?;

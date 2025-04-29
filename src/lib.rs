@@ -86,7 +86,7 @@ mod reader;
 pub use reader::Mp4Reader;
 
 mod writer;
-pub use writer::{Mp4Config, Mp4Writer};
+pub use writer::{Mp4Config, Mp4Writer, AssetType};
 
 pub fn read_mp4(f: File) -> Result<Mp4Reader<BufReader<File>>> {
     let size = f.metadata()?.len();

@@ -140,15 +140,15 @@ impl<W: Write> WriteBox<&mut W> for Mp4aBox {
         let size = self.box_size();
         BoxHeader::new(self.box_type(), size).write(writer)?;
 
-        writer.write_u32::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(self.data_reference_index)?;
+        writer.write_u32::<BigEndian>(0)?; // reserved // 4 of 6 from SampleEntry
+        writer.write_u16::<BigEndian>(0)?; // reserved // 2 of 6 from SampleEntry
+        writer.write_u16::<BigEndian>(self.data_reference_index)?; // SampleEntry
 
-        writer.write_u64::<BigEndian>(0)?; // reserved
-        writer.write_u16::<BigEndian>(self.channelcount)?;
-        writer.write_u16::<BigEndian>(self.samplesize)?;
-        writer.write_u32::<BigEndian>(0)?; // reserved
-        writer.write_u32::<BigEndian>(self.samplerate.raw_value())?;
+        writer.write_u64::<BigEndian>(0)?; // reserved // 2x 32; AudioSampleEntry
+        writer.write_u16::<BigEndian>(self.channelcount)?; // AudioSampleEntry
+        writer.write_u16::<BigEndian>(self.samplesize)?;  // AudioSampleEntry
+        writer.write_u32::<BigEndian>(0)?; // reserved  // AudioSampleEntry
+        writer.write_u32::<BigEndian>(self.samplerate.raw_value())?;  // AudioSampleEntry
 
         if let Some(ref esds) = self.esds {
             esds.write_box(writer)?;

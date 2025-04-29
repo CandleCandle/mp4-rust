@@ -1,4 +1,4 @@
-use mp4::{Mp4Config, Mp4Writer};
+use mp4::{Mp4Config, AssetType, Mp4Writer};
 use std::io::Cursor;
 
 fn main() -> mp4::Result<()> {
@@ -12,6 +12,7 @@ fn main() -> mp4::Result<()> {
             str::parse("mp41").unwrap(),
         ],
         timescale: 1000,
+        asset_type: AssetType::FLAT,
     };
 
     let data = Cursor::new(Vec::<u8>::new());

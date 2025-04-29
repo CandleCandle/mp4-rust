@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, WriteBytesExt};
+use std::convert::TryInto;
 use std::io::{Seek, SeekFrom, Write};
 
 use crate::mp4box::*;
@@ -11,6 +12,14 @@ pub struct Mp4Config {
     pub minor_version: u32,
     pub compatible_brands: Vec<FourCC>,
     pub timescale: u32,
+    pub asset_type: AssetType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AssetType {
+    FLAT,
+    INITIALISATION,
+    FRAGMENT,
 }
 
 #[derive(Debug)]
@@ -70,8 +79,10 @@ impl<W: Write + Seek> Mp4Writer<W> {
 
         // TODO largesize
         let mdat_pos = writer.stream_position()?;
-        BoxHeader::new(BoxType::MdatBox, HEADER_SIZE).write(&mut writer)?;
-        BoxHeader::new(BoxType::WideBox, HEADER_SIZE).write(&mut writer)?;
+        if config.asset_type == AssetType::FLAT {
+            BoxHeader::new(BoxType::MdatBox, HEADER_SIZE).write(&mut writer)?;
+            BoxHeader::new(BoxType::WideBox, HEADER_SIZE).write(&mut writer)?;
+        }
 
         let tracks = Vec::new();
         let timescale = config.timescale;
@@ -89,6 +100,12 @@ impl<W: Write + Seek> Mp4Writer<W> {
         let track_id = self.tracks.len() as u32 + 1;
         let track = Mp4TrackWriter::new(track_id, config)?;
         self.tracks.push(track);
+        Ok(())
+    }
+
+    pub fn add_box(&mut self, box_type: BoxType, data: &[u8]) -> Result<()> {
+        BoxHeader::new(box_type, data.len().try_into().unwrap()).write(&mut self.writer).unwrap();
+        self.writer.write(data).unwrap();
         Ok(())
     }
 
