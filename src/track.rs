@@ -672,7 +672,19 @@ impl Mp4TrackWriter {
                 let vmhd = VmhdBox::default();
                 trak.mdia.minf.vmhd = Some(vmhd);
 
-                let hev1 = Hev1Box::new(hevc_config);
+                let mut hev1 = Hev1Box::new(hevc_config);
+                hev1.hvcc.general_profile_idc = 1;
+                hev1.hvcc.general_profile_compatibility_flags = 0x10_00_00_00;
+                hev1.hvcc.general_level_idc = 0x78;
+                hev1.hvcc.chroma_format_idc = 0x01;
+                hev1.hvcc.bit_depth_luma_minus8 = 0x00;
+                hev1.hvcc.bit_depth_chroma_minus8 = 0x00;
+                hev1.hvcc.constant_frame_rate = 0b01;
+                hev1.hvcc.num_temporal_layers = 0b001;
+                hev1.hvcc.temporal_id_nested = true;
+                hev1.hvcc.length_size_minus_one = 0b11;
+
+
                 trak.mdia.minf.stbl.stsd.hev1 = Some(hev1);
             }
             MediaConfig::Vp9Config(ref config) => {

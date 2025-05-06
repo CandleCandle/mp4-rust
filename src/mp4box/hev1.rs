@@ -347,11 +347,11 @@ impl<W: Write> WriteBox<&mut W> for HvcCBox {
         writer.write_u48::<BigEndian>(self.general_constraint_indicator_flag)?;
         writer.write_u8(self.general_level_idc)?;
 
-        writer.write_u16::<BigEndian>(self.min_spatial_segmentation_idc & 0x0FFF)?;
-        writer.write_u8(self.parallelism_type & 0b11)?;
-        writer.write_u8(self.chroma_format_idc & 0b11)?;
-        writer.write_u8(self.bit_depth_luma_minus8 & 0b111)?;
-        writer.write_u8(self.bit_depth_chroma_minus8 & 0b111)?;
+        writer.write_u16::<BigEndian>(0xF000 | (self.min_spatial_segmentation_idc & 0x0FFF))?; // first byte should have top 4 bits set to 1.
+        writer.write_u8(0b1111_1100 | (self.parallelism_type & 0b11))?; //
+        writer.write_u8(0b1111_1100 | (self.chroma_format_idc & 0b11))?;
+        writer.write_u8(0b1111_1000 | (self.bit_depth_luma_minus8 & 0b111))?;
+        writer.write_u8(0b1111_1000 | (self.bit_depth_chroma_minus8 & 0b111))?;
         writer.write_u16::<BigEndian>(self.avg_frame_rate)?;
 
         let constant_frame_rate = (self.constant_frame_rate & 0b11) << 6;

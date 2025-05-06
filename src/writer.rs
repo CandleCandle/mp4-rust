@@ -160,6 +160,13 @@ impl<W: Write + Seek> Mp4Writer<W> {
         if moov.mvhd.duration > (u32::MAX as u64) {
             moov.mvhd.version = 1
         }
+        moov.mvex = Some({
+            let mut mvex = MvexBox::default();
+            mvex.trex = TrexBox::default();
+            mvex.trex.track_id = 1;
+            mvex
+        });
+
         moov.write_box(&mut self.writer)?;
         Ok(())
     }
