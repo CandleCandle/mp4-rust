@@ -44,7 +44,7 @@ impl Default for MvhdBox {
     fn default() -> Self {
         MvhdBox {
             version: 0,
-            flags: 0,
+            flags: 7, // ISO 14496-12 (2015) 8.3.2.1 has default value for flags being 7; track_enabled, track_in_movie, track_in_preview
             creation_time: 0,
             modification_time: 0,
             timescale: 1000,
