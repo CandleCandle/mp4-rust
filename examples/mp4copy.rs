@@ -61,6 +61,7 @@ fn copy<P: AsRef<Path>>(src_filename: &P, dst_filename: &P) -> Result<()> {
                 height: track.height(),
             }),
             MediaType::AAC => MediaConfig::AacConfig(AacConfig {
+                elementary_stream_id: 0,
                 bitrate: track.bitrate(),
                 profile: track.audio_profile()?,
                 freq_index: track.sample_freq_index()?,

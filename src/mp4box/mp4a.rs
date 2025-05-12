@@ -313,7 +313,7 @@ pub struct ESDescriptor {
 impl ESDescriptor {
     pub fn new(config: &AacConfig) -> Self {
         Self {
-            es_id: 1,
+            es_id: config.elementary_stream_id,
             dec_config: DecoderConfigDescriptor::new(config),
             sl_config: SLConfigDescriptor::new(),
         }

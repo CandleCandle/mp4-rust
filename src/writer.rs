@@ -166,6 +166,7 @@ impl<W: Write + Seek> Mp4Writer<W> {
             let mut mvex = MvexBox::default();
             mvex.trex = TrexBox::default();
             mvex.trex.track_id = 1;
+            mvex.trex.default_sample_description_index = 1; // usually overridden in segments to be 1 anyway?
             mvex
         });
 

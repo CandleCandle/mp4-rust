@@ -587,6 +587,7 @@ pub struct Vp9Config {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AacConfig {
+    pub elementary_stream_id: u16,
     pub bitrate: u32,
     pub profile: AudioObjectType,
     pub freq_index: SampleFreqIndex,
@@ -596,6 +597,7 @@ pub struct AacConfig {
 impl Default for AacConfig {
     fn default() -> Self {
         Self {
+            elementary_stream_id: 0,
             bitrate: 0,
             profile: AudioObjectType::AacLowComplexity,
             freq_index: SampleFreqIndex::Freq48000,
