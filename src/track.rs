@@ -654,6 +654,7 @@ impl Mp4TrackWriter {
         trak.mdia.mdhd.language = config.language.to_owned();
         trak.mdia.hdlr.handler_type = config.track_type.into();
         trak.mdia.minf.stbl.co64 = Some(Co64Box::default());
+        trak.mdia.minf.stbl.stss = Some(StssBox::default());
         match config.media_conf {
             MediaConfig::AvcConfig(ref avc_config) => {
                 trak.tkhd.set_width(avc_config.width);
@@ -674,7 +675,13 @@ impl Mp4TrackWriter {
 
                 let mut hev1 = Hev1Box::new(hevc_config);
                 hev1.hvcc.general_profile_idc = 1;
-                hev1.hvcc.general_profile_compatibility_flags = 0x10_00_00_00;
+                hev1.hvcc.general_profile_compatibility_flags = 0x60_00_00_00;
+                hev1.hvcc.general_constraint_indicator_flag = 0
+                    | 0b1000_0000__0000_0000__0000_0000 // general_progressive_source_flag
+                    | 0b0000_0000__0000_0000__0000_0000 // general_interlaced_source_flag
+                    | 0b0010_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
+                    | 0b0001_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
+                ;
                 hev1.hvcc.general_level_idc = 0x78;
                 hev1.hvcc.chroma_format_idc = 0x01;
                 hev1.hvcc.bit_depth_luma_minus8 = 0x00;
