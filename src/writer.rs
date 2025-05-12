@@ -40,7 +40,7 @@ impl<W> Mp4Writer<W> {
     /// # Examples
     ///
     /// ```rust
-    /// use mp4::{Mp4Writer, Mp4Config};
+    /// use mp4::{Mp4Writer, Mp4Config, AssetType};
     /// use std::io::Cursor;
     ///
     /// # fn main() -> mp4::Result<()> {
@@ -54,6 +54,7 @@ impl<W> Mp4Writer<W> {
     ///         str::parse("mp41").unwrap(),
     ///     ],
     ///     timescale: 1000,
+    ///     asset_type: AssetType::FLAT,
     /// };
     ///
     /// let data = Cursor::new(Vec::<u8>::new());
@@ -157,6 +158,7 @@ impl<W: Write + Seek> Mp4Writer<W> {
 
         moov.mvhd.timescale = self.timescale;
         moov.mvhd.duration = self.duration;
+        moov.mvhd.next_track_id = (moov.traks.len() as u32) + 1;
         if moov.mvhd.duration > (u32::MAX as u64) {
             moov.mvhd.version = 1
         }
