@@ -675,12 +675,15 @@ impl Mp4TrackWriter {
 
                 let mut hev1 = Hev1Box::new(hevc_config);
                 hev1.hvcc.general_profile_idc = 1;
-                hev1.hvcc.general_profile_compatibility_flags = 0x60_00_00_00;
+                hev1.hvcc.general_profile_compatibility_flags = 0
+                    | 0b0010_0000__0000_0000__0000_0000__0000_0000 // main or main10
+                    | 0b0100_0000__0000_0000__0000_0000__0000_0000 // main or main10
+                ;
                 hev1.hvcc.general_constraint_indicator_flag = 0
-                    | 0b1000_0000__0000_0000__0000_0000 // general_progressive_source_flag
-                    | 0b0000_0000__0000_0000__0000_0000 // general_interlaced_source_flag
-                    | 0b0010_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
-                    | 0b0001_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
+                    | 0b1000_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_progressive_source_flag
+                    | 0b0000_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_interlaced_source_flag
+                    | 0b0010_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
+                    | 0b0001_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
                 ;
                 hev1.hvcc.general_level_idc = 0x78;
                 hev1.hvcc.chroma_format_idc = 0x01;
