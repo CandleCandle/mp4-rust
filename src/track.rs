@@ -685,7 +685,7 @@ impl Mp4TrackWriter {
                     | 0b0010_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
                     | 0b0001_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
                 ;
-                hev1.hvcc.general_level_idc = 0x78;
+                hev1.hvcc.general_level_idc =  hevc_config.general_level_idc;
                 hev1.hvcc.chroma_format_idc = 0x01;
                 hev1.hvcc.bit_depth_luma_minus8 = 0x00;
                 hev1.hvcc.bit_depth_chroma_minus8 = 0x00;

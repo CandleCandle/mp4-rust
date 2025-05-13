@@ -576,6 +576,7 @@ pub struct AvcConfig {
 pub struct HevcConfig {
     pub width: u16,
     pub height: u16,
+    pub general_level_idc: u8,
     pub compressorname: String,
 }
 
