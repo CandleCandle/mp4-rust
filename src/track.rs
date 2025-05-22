@@ -650,6 +650,7 @@ impl Mp4TrackWriter {
     pub(crate) fn new(track_id: u32, config: &TrackConfig) -> Result<Self> {
         let mut trak = TrakBox::default();
         trak.tkhd.track_id = track_id;
+        trak.tkhd.flags = 0x7;
         trak.mdia.mdhd.timescale = config.timescale;
         trak.mdia.mdhd.language = config.language.to_owned();
         trak.mdia.hdlr.handler_type = config.track_type.into();
@@ -680,10 +681,10 @@ impl Mp4TrackWriter {
                     | 0b0100_0000__0000_0000__0000_0000__0000_0000 // main or main10
                 ;
                 hev1.hvcc.general_constraint_indicator_flag = 0
-                    | 0b1000_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_progressive_source_flag
+                    | 0b0000_0000__0000_0000__1000_0000__0000_0000__0000_0000__0000_0000 // general_progressive_source_flag
                     | 0b0000_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_interlaced_source_flag
-                    | 0b0010_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
-                    | 0b0001_0000__0000_0000__0000_0000__0000_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
+                    | 0b0000_0000__0000_0000__0010_0000__0000_0000__0000_0000__0000_0000 // general_non_packed_constraint_flag
+                    | 0b0000_0000__0000_0000__0001_0000__0000_0000__0000_0000__0000_0000 // general_frame_only_constraint_flag
                 ;
                 hev1.hvcc.general_level_idc =  hevc_config.general_level_idc;
                 hev1.hvcc.chroma_format_idc = 0x01;
