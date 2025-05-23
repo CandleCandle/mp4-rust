@@ -701,6 +701,9 @@ impl Mp4TrackWriter {
                             v_spacing: pasp_pair.1,
                         });
                 }
+                if let Some(ref colr) = hevc_config.colour_information {
+                    hev1.colr = Some(colr.clone());
+                }
 
                 trak.mdia.minf.stbl.stsd.hev1 = Some(hev1);
             }

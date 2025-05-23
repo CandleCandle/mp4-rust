@@ -20,8 +20,7 @@ pub struct Hev1Box {
     pub depth: u16,
     pub hvcc: HvcCBox,
     pub pasp: Option<PaspBox>,
-    // pub colr: Option<ColrBox>,
-    pub colr: Option<i32>,
+    pub colr: Option<ColrBox>,
 }
 
 impl Default for Hev1Box {
@@ -69,6 +68,9 @@ impl Hev1Box {
             + self.hvcc.box_size();
         if let Some(ref pasp) = self.pasp {
             size += pasp.box_size();
+        }
+        if let Some(ref colr) = self.colr {
+            size += colr.box_size();
         }
         size
     }
@@ -155,6 +157,23 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
             None
         };
 
+        let colr = if reader.stream_position()? < start+size {
+            let header = BoxHeader::read(reader)?;
+            let BoxHeader { name, size: s } = header;
+            if s > size {
+                return Err(Error::InvalidData(
+                    "hev1 box contains a box with a larger size than it",
+                ));
+            }
+            if name == BoxType::ColrBox {
+                Some(ColrBox::read_box(reader, s)?)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         skip_bytes_to(reader, start + size)?;
         match hvcc {
             Some(hvcc) => Ok(Hev1Box {
@@ -168,7 +187,7 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
                 depth,
                 hvcc,
                 pasp,
-                colr: Option::None,
+                colr,
             }),
             None => Err(Error::InvalidData("hvcc not found")),
         }
@@ -206,6 +225,9 @@ impl<W: Write> WriteBox<&mut W> for Hev1Box {
         self.hvcc.write_box(writer)?;
         if let Some(ref pasp) = self.pasp {
             pasp.write_box(writer)?;
+        }
+        if let Some(ref colr) = self.colr {
+            colr.write_box(writer)?;
         }
 
         Ok(size)
@@ -416,7 +438,7 @@ impl<W: Write> WriteBox<&mut W> for HvcCBox {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mp4box::BoxHeader;
+    use crate::{colr::NclxConfig, mp4box::BoxHeader};
     use std::io::Cursor;
 
     #[test]
@@ -435,7 +457,9 @@ mod tests {
                 ..Default::default()
             },
             pasp: Option::Some(PaspBox { h_spacing: 1, v_spacing: 1 }),
-            colr: Option::None,
+            colr: Option::Some(ColrBox {
+                nclx: Some(NclxConfig::default()),
+            }),
         };
         let mut buf = Vec::new();
         src_box.write_box(&mut buf).unwrap();

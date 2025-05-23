@@ -64,6 +64,7 @@ use crate::*;
 
 pub(crate) mod avc1;
 pub(crate) mod co64;
+pub(crate) mod colr;
 pub(crate) mod ctts;
 pub(crate) mod data;
 pub(crate) mod dinf;
@@ -109,6 +110,8 @@ pub(crate) mod vpcc;
 
 pub use avc1::Avc1Box;
 pub use co64::Co64Box;
+pub use colr::ColrBox;
+pub use colr::NclxConfig;
 pub use ctts::CttsBox;
 pub use data::DataBox;
 pub use dinf::DinfBox;
@@ -241,7 +244,8 @@ boxtype! {
     DescBox => 0x64657363,
     WideBox => 0x77696465,
     WaveBox => 0x77617665,
-    PaspBox => 0x70617370
+    PaspBox => 0x70617370,
+    ColrBox => 0x636f6c72
 }
 
 pub trait Mp4Box: Sized {
