@@ -695,6 +695,12 @@ impl Mp4TrackWriter {
                 hev1.hvcc.temporal_id_nested = true;
                 hev1.hvcc.length_size_minus_one = 0b11;
 
+                if let Some(pasp_pair) = hevc_config.pixel_aspect_ratio {
+                    hev1.pasp = Some(PaspBox {
+                            h_spacing: pasp_pair.0,
+                            v_spacing: pasp_pair.1,
+                        });
+                }
 
                 trak.mdia.minf.stbl.stsd.hev1 = Some(hev1);
             }

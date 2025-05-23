@@ -85,6 +85,7 @@ pub(crate) mod moov;
 pub(crate) mod mp4a;
 pub(crate) mod mvex;
 pub(crate) mod mvhd;
+pub(crate) mod pasp;
 pub(crate) mod smhd;
 pub(crate) mod stbl;
 pub(crate) mod stco;
@@ -129,6 +130,7 @@ pub use moov::MoovBox;
 pub use mp4a::Mp4aBox;
 pub use mvex::MvexBox;
 pub use mvhd::MvhdBox;
+pub use pasp::PaspBox;
 pub use smhd::SmhdBox;
 pub use stbl::StblBox;
 pub use stco::StcoBox;
@@ -238,7 +240,8 @@ boxtype! {
     CovrBox => 0x636f7672,
     DescBox => 0x64657363,
     WideBox => 0x77696465,
-    WaveBox => 0x77617665
+    WaveBox => 0x77617665,
+    PaspBox => 0x70617370
 }
 
 pub trait Mp4Box: Sized {

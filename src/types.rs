@@ -578,6 +578,7 @@ pub struct HevcConfig {
     pub height: u16,
     pub general_level_idc: u8,
     pub compressorname: String,
+    pub pixel_aspect_ratio: Option<(u32, u32)>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

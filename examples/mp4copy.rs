@@ -56,6 +56,7 @@ fn copy<P: AsRef<Path>>(src_filename: &P, dst_filename: &P) -> Result<()> {
                 height: track.height(),
                 general_level_idc: 120,
                 compressorname: "".to_string(),
+                pixel_aspect_ratio: Option::None,
             }),
             MediaType::VP9 => MediaConfig::Vp9Config(Vp9Config {
                 width: track.width(),

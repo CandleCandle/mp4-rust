@@ -19,6 +19,9 @@ pub struct Hev1Box {
     pub frame_count: u16,
     pub depth: u16,
     pub hvcc: HvcCBox,
+    pub pasp: Option<PaspBox>,
+    // pub colr: Option<ColrBox>,
+    pub colr: Option<i32>,
 }
 
 impl Default for Hev1Box {
@@ -33,6 +36,8 @@ impl Default for Hev1Box {
             frame_count: 1,
             depth: 0x0018,
             hvcc: HvcCBox::default(),
+            pasp: Option::None,
+            colr: Option::None,
         }
     }
 }
@@ -49,6 +54,8 @@ impl Hev1Box {
             frame_count: 1,
             depth: 0x0018,
             hvcc: HvcCBox::new(),
+            pasp: Option::None,
+            colr: Option::None,
         }
     }
 
@@ -57,7 +64,13 @@ impl Hev1Box {
     }
 
     pub fn get_size(&self) -> u64 {
-        HEADER_SIZE + 8 + 70 + self.hvcc.box_size()
+        let mut size = HEADER_SIZE
+            + 8 + 70
+            + self.hvcc.box_size();
+        if let Some(ref pasp) = self.pasp {
+            size += pasp.box_size();
+        }
+        size
     }
 }
 
@@ -119,12 +132,32 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
                 "hev1 box contains a box with a larger size than it",
             ));
         }
-        if name == BoxType::HvcCBox {
-            let hvcc = HvcCBox::read_box(reader, s)?;
+        let hvcc = if name == BoxType::HvcCBox {
+            Some(HvcCBox::read_box(reader, s)?)
+        } else {
+            None
+        };
 
-            skip_bytes_to(reader, start + size)?;
+        let pasp = if reader.stream_position()? < start+size {
+            let header = BoxHeader::read(reader)?;
+            let BoxHeader { name, size: s } = header;
+            if s > size {
+                return Err(Error::InvalidData(
+                    "hev1 box contains a box with a larger size than it",
+                ));
+            }
+            if name == BoxType::PaspBox {
+                Some(PaspBox::read_box(reader, s)?)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
-            Ok(Hev1Box {
+        skip_bytes_to(reader, start + size)?;
+        match hvcc {
+            Some(hvcc) => Ok(Hev1Box {
                 data_reference_index,
                 width,
                 height,
@@ -134,9 +167,10 @@ impl<R: Read + Seek> ReadBox<&mut R> for Hev1Box {
                 frame_count,
                 depth,
                 hvcc,
-            })
-        } else {
-            Err(Error::InvalidData("hvcc not found"))
+                pasp,
+                colr: Option::None,
+            }),
+            None => Err(Error::InvalidData("hvcc not found")),
         }
     }
 }
@@ -170,6 +204,9 @@ impl<W: Write> WriteBox<&mut W> for Hev1Box {
         writer.write_i16::<BigEndian>(-1)?; // pre-defined
 
         self.hvcc.write_box(writer)?;
+        if let Some(ref pasp) = self.pasp {
+            pasp.write_box(writer)?;
+        }
 
         Ok(size)
     }
@@ -397,6 +434,8 @@ mod tests {
                 configuration_version: 1,
                 ..Default::default()
             },
+            pasp: Option::Some(PaspBox { h_spacing: 1, v_spacing: 1 }),
+            colr: Option::None,
         };
         let mut buf = Vec::new();
         src_box.write_box(&mut buf).unwrap();
@@ -426,6 +465,8 @@ mod tests {
                 configuration_version: 1,
                 ..Default::default()
             },
+            pasp: Option::None,
+            colr: Option::None,
         };
 
         let src_box_truncated = Hev1Box {
@@ -441,6 +482,8 @@ mod tests {
                 configuration_version: 1,
                 ..Default::default()
             },
+            pasp: Option::None,
+            colr: Option::None,
         };
         let mut buf = Vec::new();
         src_box.write_box(&mut buf).unwrap();
