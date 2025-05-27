@@ -458,7 +458,7 @@ mod tests {
             },
             pasp: Option::Some(PaspBox { h_spacing: 1, v_spacing: 1 }),
             colr: Option::Some(ColrBox {
-                nclx: Some(NclxConfig::default()),
+                colour_type: colr::ColourType::Nclx(NclxConfig::default()),
             }),
         };
         let mut buf = Vec::new();

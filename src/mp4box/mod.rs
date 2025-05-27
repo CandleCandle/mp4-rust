@@ -111,6 +111,7 @@ pub(crate) mod vpcc;
 pub use avc1::Avc1Box;
 pub use co64::Co64Box;
 pub use colr::ColrBox;
+pub use colr::ColourType;
 pub use colr::NclxConfig;
 pub use ctts::CttsBox;
 pub use data::DataBox;
