@@ -7,7 +7,6 @@ use crate::mp4box::*;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct MvhdBox {
     pub version: u8,
-    pub flags: u32,
     pub creation_time: u64,
     pub modification_time: u64,
     pub timescale: u32,
@@ -44,7 +43,6 @@ impl Default for MvhdBox {
     fn default() -> Self {
         MvhdBox {
             version: 0,
-            flags: 7, // ISO 14496-12 (2015) 8.3.2.1 has default value for flags being 7; track_enabled, track_in_movie, track_in_preview
             creation_time: 0,
             modification_time: 0,
             timescale: 1000,
@@ -136,7 +134,6 @@ impl<R: Read + Seek> ReadBox<&mut R> for MvhdBox {
 
         Ok(MvhdBox {
             version,
-            flags,
             creation_time,
             modification_time,
             timescale,
@@ -154,7 +151,7 @@ impl<W: Write> WriteBox<&mut W> for MvhdBox {
         let size = self.box_size();
         BoxHeader::new(self.box_type(), size).write(writer)?;
 
-        write_box_header_ext(writer, self.version, self.flags)?;
+        write_box_header_ext(writer, self.version, 0)?;
 
         if self.version == 1 {
             writer.write_u64::<BigEndian>(self.creation_time)?;
@@ -205,7 +202,6 @@ mod tests {
     fn test_mvhd32() {
         let src_box = MvhdBox {
             version: 0,
-            flags: 0,
             creation_time: 100,
             modification_time: 200,
             timescale: 1000,
@@ -232,7 +228,6 @@ mod tests {
     fn test_mvhd64() {
         let src_box = MvhdBox {
             version: 1,
-            flags: 0,
             creation_time: 100,
             modification_time: 200,
             timescale: 1000,
