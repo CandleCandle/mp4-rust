@@ -87,7 +87,7 @@ impl<R: Read + Seek> ReadBox<&mut R> for MvhdBox {
     fn read_box(reader: &mut R, size: u64) -> Result<Self> {
         let start = box_start(reader)?;
 
-        let (version, flags) = read_box_header_ext(reader)?;
+        let (version, _flags) = read_box_header_ext(reader)?;
 
         let (creation_time, modification_time, timescale, duration) = if version == 1 {
             (
